@@ -7,7 +7,6 @@ import dev.kord.common.entity.Snowflake
 import dev.kord.core.behavior.channel.createEmbed
 import dev.kord.core.entity.channel.TextChannel
 import kotlinx.datetime.Clock
-import org.bukkit.configuration.file.FileConfiguration
 
 object RelayController {
 
@@ -25,6 +24,11 @@ object RelayController {
         informous.config.getLongList(CHANNEL_LIST_PATH)
             .map { kord.getChannel(Snowflake(it)) as TextChannel }
             .forEach(exceptionChannels::add)
+
+        // Clean the recent exception map periodically
+        informous.server.scheduler.runTaskTimer(informous, { _ ->
+            DuplicateExceptionIdentifier.cleanUp()
+        }, 0L, 1_200L)
     }
 
     /**
@@ -55,6 +59,11 @@ object RelayController {
      */
     suspend fun relayServerException(exception: ServerException) {
         val exceptionType = exception.toExceptionType()
+
+        // Ignore duplicate exceptions from repeating bukkit tasks
+        if (exception is ServerSchedulerException && DuplicateExceptionIdentifier.isDuplicateTaskException(exception)) {
+            return
+        }
 
         exceptionChannels.forEach {
             it.createEmbed {

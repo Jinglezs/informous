@@ -10,7 +10,6 @@ import com.kotlindiscord.kord.extensions.extensions.slashCommandCheck
 import com.kotlindiscord.kord.extensions.types.respond
 import dev.kord.common.entity.Permission
 import dev.kord.core.entity.channel.TextChannel
-import dev.kord.gateway.Intent
 import dev.kord.gateway.PrivilegedIntent
 
 class RelayExtension(
@@ -21,10 +20,6 @@ class RelayExtension(
 
     @OptIn(PrivilegedIntent::class)
     override suspend fun setup() {
-        intents.addAll(
-            listOf(Intent.MessageContent, Intent.GuildMessageReactions)
-        )
-
         ephemeralSlashCommand {
             name = "relay"
             description = "Manage the exception relay extension"

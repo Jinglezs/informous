@@ -3,6 +3,7 @@ package com.knockturnmc.informous
 import com.knockturnmc.informous.discord.RelayController
 import com.knockturnmc.informous.discord.RelayExtension
 import com.knockturnmc.informous.minecraft.ExceptionListener
+import com.knockturnmc.informous.minecraft.RelayTestCommand
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import kotlinx.coroutines.*
 import org.bukkit.plugin.java.JavaPlugin
@@ -18,6 +19,7 @@ class Informous : JavaPlugin() {
 
     override fun onEnable() {
         server.pluginManager.registerEvents(ExceptionListener(this), this)
+        getCommand("relay-test")?.setExecutor(RelayTestCommand(this))
 
         val discordToken = config.getString("discord_token")
 

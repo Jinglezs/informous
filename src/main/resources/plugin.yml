@@ -3,3 +3,7 @@ author: "Jatyn Stacy"
 version: "1.0.0"
 api-version: "1.19"
 main: "com.knockturnmc.informous.Informous"
+
+commands:
+  relay-test:
+    description: "Throws a runtime exception to test the exception relay."
