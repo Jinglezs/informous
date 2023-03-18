@@ -13,7 +13,9 @@ import dev.kord.core.entity.channel.TextChannel
 import dev.kord.gateway.Intent
 import dev.kord.gateway.PrivilegedIntent
 
-class RelayExtension : Extension() {
+class RelayExtension(
+    private val informous: Informous
+): Extension() {
 
     override val name: String = "relay"
 
@@ -28,7 +30,7 @@ class RelayExtension : Extension() {
             description = "Manage the exception relay extension"
 
             // Register this as a guild-specific command
-            val config = Informous.instance.config
+            val config = informous.config
             if (config.contains("guild-id")) guild(config.getLong("guild-id"))
 
             slashCommandCheck {

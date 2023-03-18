@@ -7,21 +7,22 @@ import dev.kord.common.entity.Snowflake
 import dev.kord.core.behavior.channel.createEmbed
 import dev.kord.core.entity.channel.TextChannel
 import kotlinx.datetime.Clock
+import org.bukkit.configuration.file.FileConfiguration
 
 object RelayController {
 
     private const val CHANNEL_LIST_PATH = "relay.registered_channels"
     private val exceptionChannels: MutableSet<TextChannel> = mutableSetOf()
-
-    private val config = Informous.instance.config
+    private lateinit var informous: Informous
 
     /**
      * Reads the plugin configuration to determine which discord channels should be registered as relays
      */
-    suspend fun setUp() {
-        val kord = Informous.discordBot.kordRef
+    suspend fun setUp(informous: Informous) {
+        val kord = informous.discordBot.kordRef
+        this.informous = informous
 
-        config.getLongList(CHANNEL_LIST_PATH)
+        informous.config.getLongList(CHANNEL_LIST_PATH)
             .map { kord.getChannel(Snowflake(it)) as TextChannel }
             .forEach(exceptionChannels::add)
     }
@@ -31,8 +32,8 @@ object RelayController {
      */
     fun serializeRegistry() {
         val channelIds = exceptionChannels.map { it.id.value.toLong() }.toList()
-        config.set(CHANNEL_LIST_PATH, channelIds)
-        Informous.instance.saveConfig()
+        informous.config.set(CHANNEL_LIST_PATH, channelIds)
+        informous.saveConfig()
     }
 
     /**

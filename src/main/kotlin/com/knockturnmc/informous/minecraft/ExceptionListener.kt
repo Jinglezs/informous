@@ -7,11 +7,13 @@ import kotlinx.coroutines.launch
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 
-class ExceptionListener: Listener {
+class ExceptionListener(
+    private val informous: Informous
+): Listener {
     @EventHandler
     fun onServerException(event: ServerExceptionEvent) {
         // Send an embed message using the plugin's coroutine scope.
-        Informous.pluginScope.launch {
+        informous.pluginScope.launch {
             RelayController.relayServerException(event.exception)
         }
     }
