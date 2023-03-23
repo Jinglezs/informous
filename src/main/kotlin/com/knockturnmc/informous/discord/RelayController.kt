@@ -1,12 +1,15 @@
 package com.knockturnmc.informous.discord
 
-import com.destroystokyo.paper.exception.*
+import com.destroystokyo.paper.exception.ServerException
+import com.destroystokyo.paper.exception.ServerSchedulerException
 import com.knockturnmc.informous.Informous
 import dev.kord.common.Color
 import dev.kord.common.entity.Snowflake
 import dev.kord.core.behavior.channel.createEmbed
 import dev.kord.core.entity.channel.TextChannel
+import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
+import kotlin.properties.Delegates
 
 object RelayController {
 
@@ -14,21 +17,32 @@ object RelayController {
     private val exceptionChannels: MutableSet<TextChannel> = mutableSetOf()
     private lateinit var informous: Informous
 
+    private var queuedExceptions = mutableListOf<ServerException>()
+
+    // Exceptions may occur while the bot has not completed start-up, or if it disconnects for any reason
+    // This will automatically send the queued exceptions when discord is (re)connected
+    var discordConnected: Boolean by Delegates.observable(false) { _, _, newValue ->
+        if (newValue) {
+            informous.pluginScope.launch {
+                queuedExceptions.forEach { relayServerException(it) }
+                queuedExceptions.clear()
+            }
+        }
+    }
+
     /**
      * Reads the plugin configuration to determine which discord channels should be registered as relays
+     * Should only be called after the bot has connected to Discord
      */
     suspend fun setUp(informous: Informous) {
-        val kord = informous.discordBot.kordRef
         this.informous = informous
+        val kord = informous.discordBot.kordRef
 
         informous.config.getLongList(CHANNEL_LIST_PATH)
             .map { kord.getChannel(Snowflake(it)) as TextChannel }
             .forEach(exceptionChannels::add)
 
-        // Clean the recent exception map periodically
-        informous.server.scheduler.runTaskTimer(informous, { _ ->
-            DuplicateExceptionIdentifier.cleanUp()
-        }, 0L, 1_200L)
+        discordConnected = true
     }
 
     /**
@@ -64,6 +78,13 @@ object RelayController {
         if (exception is ServerSchedulerException && DuplicateExceptionIdentifier.isDuplicateTaskException(exception)) {
             return
         }
+
+        if (!informous.discordConnected) {
+
+            return
+        }
+
+        //if (informous.discordBot.kordRef.)
 
         exceptionChannels.forEach {
             it.createEmbed {

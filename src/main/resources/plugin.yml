@@ -1,8 +1,13 @@
 name: "Informous"
 author: "Jatyn Stacy"
-version: "1.0.0"
+version: ${version}
 api-version: "1.19"
 main: "com.knockturnmc.informous.Informous"
+load: STARTUP
+
+libraries:
+  - ${kotlinCoroutines}
+  - ${kotlinReflect}
 
 commands:
   relay-test:

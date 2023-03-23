@@ -6,11 +6,15 @@ import com.kotlindiscord.kord.extensions.commands.application.slash.ephemeralSub
 import com.kotlindiscord.kord.extensions.commands.application.slash.group
 import com.kotlindiscord.kord.extensions.extensions.Extension
 import com.kotlindiscord.kord.extensions.extensions.ephemeralSlashCommand
+import com.kotlindiscord.kord.extensions.extensions.event
 import com.kotlindiscord.kord.extensions.extensions.slashCommandCheck
 import com.kotlindiscord.kord.extensions.types.respond
 import dev.kord.common.entity.Permission
 import dev.kord.core.entity.channel.TextChannel
-import dev.kord.gateway.PrivilegedIntent
+import dev.kord.core.event.gateway.ConnectEvent
+import dev.kord.core.event.gateway.DisconnectEvent
+import dev.kord.core.event.gateway.ReadyEvent
+import dev.kord.core.event.gateway.ResumedEvent
 
 class RelayExtension(
     private val informous: Informous
@@ -18,8 +22,36 @@ class RelayExtension(
 
     override val name: String = "relay"
 
-    @OptIn(PrivilegedIntent::class)
     override suspend fun setup() {
+
+        // Event called when the bot has successfully logged in
+        event<ReadyEvent> {
+            action {
+                RelayController.setUp(informous)
+            }
+        }
+
+        // Update Discord connection status
+        event<DisconnectEvent> {
+            action {
+                RelayController.discordConnected = false
+            }
+        }
+
+        event<ResumedEvent> {
+            action {
+                RelayController.discordConnected = true
+            }
+        }
+
+        // Called after a reconnection
+        event<ConnectEvent> {
+            action {
+                RelayController.discordConnected = true
+            }
+        }
+
+        // Register slash commands
         ephemeralSlashCommand {
             name = "relay"
             description = "Manage the exception relay extension"
