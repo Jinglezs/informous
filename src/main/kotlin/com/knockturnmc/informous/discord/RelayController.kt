@@ -79,12 +79,11 @@ object RelayController {
             return
         }
 
+        // Queue exceptions when discord is disconnected
         if (!informous.discordConnected) {
-
+            queuedExceptions.add(exception)
             return
         }
-
-        //if (informous.discordBot.kordRef.)
 
         exceptionChannels.forEach {
             it.createEmbed {

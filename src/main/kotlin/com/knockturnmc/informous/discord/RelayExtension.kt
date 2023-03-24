@@ -23,7 +23,6 @@ class RelayExtension(
     override val name: String = "relay"
 
     override suspend fun setup() {
-
         // Event called when the bot has successfully logged in
         event<ReadyEvent> {
             action {
@@ -51,14 +50,19 @@ class RelayExtension(
             }
         }
 
+        val config = informous.config
+        if (!config.contains("guild-id")) {
+            informous.logger.warning("A guild-id must be configured to register Discord slash commands")
+            return
+        }
+
         // Register slash commands
         ephemeralSlashCommand {
             name = "relay"
             description = "Manage the exception relay extension"
 
             // Register this as a guild-specific command
-            val config = informous.config
-            if (config.contains("guild-id")) guild(config.getLong("guild-id"))
+            guild(config.getLong("guild-id"))
 
             slashCommandCheck {
                 hasPermission(Permission.Administrator)

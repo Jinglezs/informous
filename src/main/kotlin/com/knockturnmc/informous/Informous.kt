@@ -7,6 +7,7 @@ import com.knockturnmc.informous.minecraft.ExceptionListener
 import com.knockturnmc.informous.minecraft.RelayTestCommand
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import kotlinx.coroutines.*
+import mu.KotlinLogging
 import org.bukkit.plugin.java.JavaPlugin
 
 class Informous : JavaPlugin() {

@@ -5,9 +5,8 @@ api-version: "1.19"
 main: "com.knockturnmc.informous.Informous"
 load: STARTUP
 
-libraries:
-  - ${kotlinCoroutines}
-  - ${kotlinReflect}
+loader: com.knockturnmc.informous.InformousPluginLoader
+has-open-classloader: true
 
 commands:
   relay-test:
