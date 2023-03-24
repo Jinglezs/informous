@@ -80,7 +80,7 @@ object RelayController {
         }
 
         // Queue exceptions when discord is disconnected
-        if (!informous.discordConnected) {
+        if (!discordConnected) {
             queuedExceptions.add(exception)
             return
         }

@@ -4,10 +4,11 @@ import com.knockturnmc.informous.Informous
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
+import org.bukkit.command.PluginCommand
 
 class RelayTestCommand(
     private val informous: Informous
-): CommandExecutor {
+): Command("relay-test"), CommandExecutor {
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
         if (!sender.isOp || args.isNullOrEmpty()) return false
@@ -24,6 +25,10 @@ class RelayTestCommand(
         }
 
         return true
+    }
+
+    override fun execute(sender: CommandSender, commandLabel: String, args: Array<out String>?): Boolean {
+        return this.onCommand(sender, this, commandLabel, args);
     }
 
 }

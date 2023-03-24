@@ -15,8 +15,6 @@ class Informous : JavaPlugin() {
     lateinit var discordBot: ExtensibleBot
         private set
 
-    var discordConnected = false
-
     // A coroutine scope that is only active as long as the plugin is enabled.
     val pluginScope = CoroutineScope(Dispatchers.IO)
 
@@ -45,7 +43,7 @@ class Informous : JavaPlugin() {
 
     override fun onEnable() {
         server.pluginManager.registerEvents(ExceptionListener(this), this)
-        getCommand("relay-test")?.setExecutor(RelayTestCommand(this))
+        server.commandMap.register(name, RelayTestCommand(this))
 
         // Clean the recent exception map periodically
         server.scheduler.runTaskTimer(this, { _ ->
