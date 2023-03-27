@@ -3,13 +3,20 @@ package com.knockturnmc.informous.discord
 import com.destroystokyo.paper.exception.ServerException
 import com.destroystokyo.paper.exception.ServerSchedulerException
 import com.knockturnmc.informous.Informous
+import com.kotlindiscord.kord.extensions.components.components
+import com.kotlindiscord.kord.extensions.components.ephemeralButton
+import com.kotlindiscord.kord.extensions.types.respond
 import dev.kord.common.Color
 import dev.kord.common.entity.Snowflake
-import dev.kord.core.behavior.channel.createEmbed
+import dev.kord.core.behavior.channel.createMessage
+import dev.kord.core.behavior.edit
 import dev.kord.core.entity.channel.TextChannel
+import dev.kord.rest.builder.message.create.embed
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlin.properties.Delegates
+import kotlin.time.Duration.Companion.minutes
 
 object RelayController {
 
@@ -85,17 +92,46 @@ object RelayController {
             return
         }
 
-        exceptionChannels.forEach {
-            it.createEmbed {
-                this.color = Color(255, 0, 0)
-                this.timestamp = Clock.System.now()
-                this.description = "${exception.message}\n${exception.rootCause.message ?: "No details provided"}"
+        exceptionChannels.forEach { channel ->
+            val message = channel.createMessage {
+                embed {
+                    this.color = Color(255, 0, 0)
+                    this.timestamp = Clock.System.now()
+                    this.description = "${exception.message}\n${exception.rootCause.message ?: "No details provided"}"
 
-                field("Root Exception", false) { exception.rootCause.javaClass.name }
+                    field("Root Exception", false) { exception.rootCause.javaClass.name }
 
-                // Append additional information based on exception type
-                exceptionType.embedDecorator.invoke(this, exception)
+                    // Append additional information based on exception type
+                    exceptionType.embedDecorator.invoke(this, exception)
+                }
+
+                components((10).minutes) {
+                    ephemeralButton {
+                        label = "View Full Stacktrace"
+
+                        action {
+                            respond {
+                                this.content = "Sending the stacktrace your way!"
+                            }
+
+                            // Not interested in seeing the stacktrace elements where the server threw the wrapper exception
+                            val nestedException = exception.cause ?: exception
+                            this.user.getDmChannel().createMessage {
+                                content = "```${nestedException.stackTraceToString()}```"
+                            }
+                        }
+                    }
+                }
             }
+
+            //Remove the button once it has timed out
+            informous.pluginScope.launch {
+                delay((10).minutes)
+                message.edit {
+                    this.components = mutableListOf()
+                }
+            }
+
         }
     }
 }

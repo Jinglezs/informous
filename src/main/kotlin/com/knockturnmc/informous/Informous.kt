@@ -7,7 +7,6 @@ import com.knockturnmc.informous.minecraft.ExceptionListener
 import com.knockturnmc.informous.minecraft.RelayTestCommand
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import kotlinx.coroutines.*
-import mu.KotlinLogging
 import org.bukkit.plugin.java.JavaPlugin
 
 class Informous : JavaPlugin() {
@@ -56,7 +55,7 @@ class Informous : JavaPlugin() {
 
         runBlocking(Dispatchers.IO) {
             discordBot.close()
-            if (pluginScope.isActive) pluginScope.cancel() // Cancel all coroutines running in the plugin's scope.
+            if (pluginScope.isActive) pluginScope.cancel("Disabling plugin") // Cancel all coroutines running in the plugin's scope.
         }
     }
 
