@@ -111,13 +111,9 @@ object RelayController {
 
                         action {
                             respond {
-                                this.content = "Sending the stacktrace your way!"
-                            }
-
-                            // Not interested in seeing the stacktrace elements where the server threw the wrapper exception
-                            val nestedException = exception.cause ?: exception
-                            this.user.getDmChannel().createMessage {
-                                content = "```${nestedException.stackTraceToString()}```"
+                                // Not interested in seeing the stacktrace elements where the server threw the wrapper exception
+                                val nestedException = exception.cause ?: exception
+                                this.content = "```${nestedException.stackTraceToString()}```"
                             }
                         }
                     }
