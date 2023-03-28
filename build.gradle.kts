@@ -6,7 +6,7 @@ plugins {
 apply(plugin = "java")
 
 group = "com.knockturnmc"
-version = "1.0"
+version = "0.1.0"
 
 repositories {
     maven("https://oss.sonatype.org/content/repositories/snapshots/")
