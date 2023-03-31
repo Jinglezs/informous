@@ -3,20 +3,20 @@ package com.knockturnmc.informous.discord
 import com.destroystokyo.paper.exception.ServerException
 import com.destroystokyo.paper.exception.ServerSchedulerException
 import com.knockturnmc.informous.Informous
+import com.knockturnmc.informous.LazyServerException
 import com.kotlindiscord.kord.extensions.components.components
 import com.kotlindiscord.kord.extensions.components.ephemeralButton
 import com.kotlindiscord.kord.extensions.types.respond
 import dev.kord.common.Color
 import dev.kord.common.entity.Snowflake
 import dev.kord.core.behavior.channel.createMessage
-import dev.kord.core.behavior.edit
 import dev.kord.core.entity.channel.TextChannel
 import dev.kord.rest.builder.message.create.embed
-import kotlinx.coroutines.delay
+import io.ktor.client.request.forms.*
+import io.ktor.utils.io.*
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlin.properties.Delegates
-import kotlin.time.Duration.Companion.minutes
 
 object RelayController {
 
@@ -24,7 +24,7 @@ object RelayController {
     private val exceptionChannels: MutableSet<TextChannel> = mutableSetOf()
     private lateinit var informous: Informous
 
-    private var queuedExceptions = mutableListOf<ServerException>()
+    private val queuedExceptions = mutableListOf<ServerException>()
 
     // Exceptions may occur while the bot has not completed start-up, or if it disconnects for any reason
     // This will automatically send the queued exceptions when discord is (re)connected
@@ -92,8 +92,10 @@ object RelayController {
             return
         }
 
+        val lazyException = LazyServerException(informous, exception)
+
         exceptionChannels.forEach { channel ->
-            val message = channel.createMessage {
+            channel.createMessage {
                 embed {
                     this.color = Color(255, 0, 0)
                     this.timestamp = Clock.System.now()
@@ -105,29 +107,28 @@ object RelayController {
                     exceptionType.embedDecorator.invoke(this, exception)
                 }
 
-                components((10).minutes) {
+                components {
                     ephemeralButton {
                         label = "View Full Stacktrace"
 
                         action {
                             respond {
-                                // Not interested in seeing the stacktrace elements where the server threw the wrapper exception
-                                val nestedException = exception.cause ?: exception
-                                this.content = "```${nestedException.stackTraceToString()}```"
+                                this.content = if (lazyException.exceedsCharacterLimit) {
+                                    // Empty link indicates there was an error generating the paste link
+                                    lazyException.stackTraceLink.ifEmpty {
+                                        // Attach the stacktrace to the message as a text file
+                                        addFile(name = "stacktrace.txt", contentProvider = ChannelProvider {
+                                            ByteReadChannel(text = lazyException.stackTraceString)
+                                        })
+
+                                        "View the attached text file."
+                                    }
+                                } else "```${lazyException.stackTraceString}```"
                             }
                         }
                     }
                 }
             }
-
-            //Remove the button once it has timed out
-            informous.pluginScope.launch {
-                delay((10).minutes)
-                message.edit {
-                    this.components = mutableListOf()
-                }
-            }
-
         }
     }
 }
