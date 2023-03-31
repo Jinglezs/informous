@@ -4,7 +4,7 @@ import com.knockturnmc.informous.Informous
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
-import org.bukkit.command.PluginCommand
+import org.bukkit.scheduler.BukkitTask
 
 class RelayTestCommand(
     private val informous: Informous
@@ -21,6 +21,29 @@ class RelayTestCommand(
 
                informous.server.scheduler.runTaskLater(informous, Runnable { task.cancel() }, 60L)
             }
+
+            "multiple-tasks" -> {
+                val runnable = Runnable {
+                    throw RuntimeException("Testing multi-task duplicate exceptions")
+                }
+
+                val scheduledTasks = arrayOfNulls<BukkitTask>(3)
+
+                (0..2).forEach {
+                    scheduledTasks[it] = informous.server.scheduler.runTaskTimer(informous, runnable, 0L, 20L)
+                }
+
+                informous.server.scheduler.runTaskLater(informous, Runnable {
+                    scheduledTasks.forEach { it?.cancel() }
+                }, 60L)
+            }
+
+            "max-char-limit" -> {
+                var exception = RuntimeException("Big boi nested exception")
+                (0..12).forEach { exception = RuntimeException("Wrapper exception $it", exception) }
+                throw exception
+            }
+
             else -> throw RuntimeException("Testing exception relay!")
         }
 
@@ -28,7 +51,7 @@ class RelayTestCommand(
     }
 
     override fun execute(sender: CommandSender, commandLabel: String, args: Array<out String>?): Boolean {
-        return this.onCommand(sender, this, commandLabel, args);
+        return this.onCommand(sender, this, commandLabel, args)
     }
 
 }
