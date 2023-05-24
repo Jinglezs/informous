@@ -6,6 +6,7 @@ import com.knockturnmc.informous.discord.RelayExtension
 import com.knockturnmc.informous.minecraft.ExceptionListener
 import com.knockturnmc.informous.minecraft.RelayTestCommand
 import com.kotlindiscord.kord.extensions.ExtensibleBot
+import dev.kord.common.entity.PresenceStatus
 import kotlinx.coroutines.*
 import org.bukkit.plugin.java.JavaPlugin
 
@@ -34,6 +35,10 @@ class Informous : JavaPlugin() {
                 }
 
                 plugins { enabled = false }
+
+                presence {
+                    status = PresenceStatus.Idle // Default the bot to idle, move to online down the line
+                }
             }
 
             discordBot.start()
@@ -43,6 +48,16 @@ class Informous : JavaPlugin() {
     override fun onEnable() {
         server.pluginManager.registerEvents(ExceptionListener(this), this)
         server.commandMap.register(name, RelayTestCommand(this))
+
+        // After server start up, the scheduler runs its fist heartbeat on the main thread.
+        // We update the discord bots status at that point.
+        server.scheduler.runTaskLater(this, { _ ->
+            pluginScope.launch {
+                discordBot.kordRef.editPresence {
+                    status = PresenceStatus.Online
+                }
+            }
+        }, 1L)
 
         // Clean the recent exception map periodically
         server.scheduler.runTaskTimer(this, { _ ->
